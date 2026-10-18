@@ -1,0 +1,13 @@
+# --- 本地运行产物，不入库 ---
+data/arena.db
+data/arena.db-wal
+data/arena.db-shm
+data/secret.key
+logs/
+qa/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.DS_Store
+Thumbs.db
