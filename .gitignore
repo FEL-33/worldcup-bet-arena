@@ -11,3 +11,6 @@ __pycache__/
 .env
 .DS_Store
 Thumbs.db
+arena.db
+temp_tunnel.log
+tools/cloudflared.exe
