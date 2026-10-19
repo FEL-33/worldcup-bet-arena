@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>后台管理 · 绿茵竞猜场</title>
+<style>
+:root{--bg:#070c14;--panel:#0f1928;--panel2:#152236;--line:#1e2f45;--txt:#e6eef8;--sub:#8399b3;
+--green:#22c55e;--gold:#f5b301;--red:#ef4444;--blue:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","Microsoft YaHei",sans-serif;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+.hide{display:none!important}
+header{display:flex;align-items:center;gap:14px;padding:13px 22px;background:#0a1220;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800}
+.logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#22c55e,#0e7490);display:block}
+header small{color:var(--sub);font-size:11px;letter-spacing:2px}
+.spacer{flex:1}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 13px;border-radius:9px;font-size:13px;font-weight:600}
+.btn:hover{border-color:#2f4a6b}
+.btn.pri{background:linear-gradient(135deg,#22c55e,#16a34a);color:#04140a;font-weight:800;border:none}
+.btn.dan{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.4);color:#ff9d9d}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:7px}
+main{padding:18px 22px 60px;max-width:1500px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:linear-gradient(180deg,var(--panel),#0b1421);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi small{color:var(--sub);font-size:11px;letter-spacing:.5px}
+.kpi b{display:block;font-size:24px;margin-top:6px;font-weight:900}
+.kpi.g b{color:#5ee98b}.kpi.y b{color:var(--gold)}.kpi.r b{color:#ff9d9d}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:16px;overflow:hidden}
+.panel .ph{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel .ph b{font-size:14px}
+.panel .pb{padding:14px 16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--sub);font-size:11px;font-weight:600;background:#0c1624}
+tr:hover td{background:rgba(255,255,255,.02)}
+.pill{padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700}
+.p-win{background:rgba(34,197,94,.16);color:#5ee98b}.p-lose{background:rgba(239,68,68,.15);color:#ff9d9d}
+.p-pend{background:rgba(245,179,1,.15);color:#f7c948}.p-push{background:#24303f;color:#a9bbcd}
+.pos{color:#5ee98b}.neg{color:#ff9d9d}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select{background:#0a1420;border:1px solid #22374f;color:var(--txt);padding:8px 10px;border-radius:9px;font-size:13px;outline:none;font-family:inherit}
+input:focus,select:focus{border-color:var(--green)}
+.stat{display:flex;gap:16px;flex-wrap:wrap;color:var(--sub);font-size:12px}
+.stat b{color:var(--txt)}
+.chart{display:flex;align-items:flex-end;gap:3px;height:90px;padding:8px 0}
+.chart i{flex:1;min-width:4px;background:linear-gradient(180deg,#22c55e,#0e7490);border-radius:2px 2px 0 0;min-height:2px}
+.small{color:var(--sub);font-size:11px}
+.overlay{position:fixed;inset:0;background:rgba(3,7,13,.8);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.modal{width:100%;max-width:400px;background:#101b29;border:1px solid #24384f;border-radius:16px;padding:22px}
+.modal h3{margin-bottom:14px;font-size:17px}
+.f{margin-bottom:10px}.f label{display:block;font-size:12px;color:var(--sub);margin-bottom:5px}
+.f input,.f select{width:100%}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(16px);opacity:0;transition:.25s;
+background:#16283c;border:1px solid #2b4360;padding:11px 18px;border-radius:11px;font-size:13px;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i></i><div>绿茵竞猜场 · 后台<small>ADMIN CONSOLE</small></div></div>
+  <div class="spacer"></div>
+  <span id="whoami" class="small"></span>
+  <button class="btn" id="btnRefresh">刷新</button>
+  <button class="btn dan" id="btnLogout">退出</button>
+</header>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="panel">
+    <div class="ph"><b>赛季控制</b><span class="small" id="seasonInfo"></span><div class="spacer"></div>
+      <div class="row">
+        <button class="btn sm pri" data-season="start">开始/继续</button>
+        <button class="btn sm" data-season="pause">暂停</button>
+        <button class="btn sm" data-season="open">开当前场</button>
+        <button class="btn sm" data-season="kickoff">立刻开赛</button>
+        <button class="btn sm" data-season="settle">立刻结算</button>
+        <button class="btn sm" data-season="next">下一场</button>
+        <button class="btn sm dan" data-season="reset">重置赛季</button>
+        <input id="gotoNum" type="number" min="1" max="104" placeholder="场次" style="width:78px">
+        <button class="btn sm" id="btnGoto">跳转</button>
+      </div>
+    </div>
+    <div class="pb">
+      <div class="row" style="margin-bottom:12px">
+        <span class="small">下注时长</span><input id="setBet" type="number" style="width:90px">
+        <span class="small">比赛时长</span><input id="setLive" type="number" style="width:90px">
+        <span class="small">场间间隔</span><input id="setInter" type="number" style="width:90px">
+        <label class="small"><input id="setAuto" type="checkbox" style="vertical-align:-2px"> 自动推进</label>
+        <button class="btn sm pri" id="btnSaveSet">保存设置</button>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="small">近 48 小时金币变动趋势（按小时聚合）</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><b>注单实时监控</b><span class="small">最新 300 条</span><div class="spacer"></div>
+      <span class="stat" id="betStats"></span></div>
+    <div class="pb" style="padding:0;max-height:340px;overflow:auto">
+      <table><thead><tr><th>#</th><th>玩家</th><th>场次</th><th>盘口 / 选择</th><th>金额</th><th>赔率</th><th>状态</th><th>返还</th><th>时间</th></tr></thead>
+      <tbody id="betBody"></tbody></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><b>用户管理</b><div class="spacer"></div><span class="small">可疑大额变动可直接调账</span></div>
+    <div class="pb" style="padding:0;max-height:360px;overflow:auto">
+      <table><thead><tr><th>ID</th><th>账号</th><th>昵称</th><th>金币</th><th>注单数</th><th>累计投注</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="userBody"></tbody></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><b>赛事视频源</b><div class="spacer"></div>
+      <button class="btn sm pri" id="btnAddVideo">新增视频源</button></div>
+    <div class="pb" style="padding:0">
+      <table><thead><tr><th>ID</th><th>关联场次</th><th>标题</th><th>类型</th><th>地址</th><th>操作</th></tr></thead>
+      <tbody id="videoBody"></tbody></table>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="loginOverlay">
+  <div class="modal">
+    <h3>管理员登录</h3>
+    <div class="f"><label>管理员账号</label><input id="lgName" value="admin"></div>
+    <div class="f"><label>密码</label><input id="lgPass" type="password" placeholder="默认 admin123"></div>
+    <button class="btn pri" style="width:100%;padding:11px" id="btnLogin">登录</button>
+    <div class="small" style="margin-top:10px">首次启动默认账号 admin / admin123，请登录后立即修改。</div>
+  </div>
+</div>
+
+<div class="overlay hide" id="videoModal">
+  <div class="modal">
+    <h3>新增赛事视频源</h3>
+    <div class="f"><label>关联场次（0 = 全局通用）</label><input id="vmMatch" type="number" value="0"></div>
+    <div class="f"><label>标题</label><input id="vmTitle" placeholder="如：决赛官方集锦"></div>
+    <div class="f"><label>类型</label><select id="vmKind">
+      <option value="embed">embed（官方嵌入页 iframe）</option>
+      <option value="hls">hls（.m3u8 直播/回放）</option>
+      <option value="mp4">mp4（直链视频）</option></select></div>
+    <div class="f"><label>地址（必须是您拥有合法授权的源）</label><input id="vmUrl" placeholder="https://..."></div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="vmCancel">取消</button>
+      <button class="btn pri" id="vmSave">保存</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
+let TOKEN = localStorage.getItem('wc_admin_token') || '';
+function fmt(n){ return (n||0).toLocaleString('zh-CN'); }
+function toast(m, ok=true){ const t=$('#toast'); t.textContent=m; t.style.borderColor= ok?'#2b4360':'#7f2b2b'; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
+async function api(p, m='GET', b){
+  const o = {method:m, headers:{'Content-Type':'application/json'}};
+  if (TOKEN) o.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (b) o.body = JSON.stringify(b);
+  const r = await fetch(p, o);
+  const j = await r.json().catch(()=>({ok:false,error:'网络错误'}));
+  if (r.status===401){ $('#loginOverlay').classList.remove('hide'); }
+  return j;
+}
+$('#btnLogin').onclick = async ()=>{
+  const j = await api('/api/admin/login','POST',{username:$('#lgName').value.trim(), password:$('#lgPass').value});
+  if (!j.ok) return toast(j.error, false);
+  TOKEN = j.data.token; localStorage.setItem('wc_admin_token', TOKEN);
+  $('#whoami').textContent = '管理员：' + j.data.user.username;
+  $('#loginOverlay').classList.add('hide'); toast('登录成功');
+  refreshAll(); loadUsers(); loadVideos();
+};
+$('#btnLogout').onclick = ()=>{ TOKEN=''; localStorage.removeItem('wc_admin_token'); location.reload(); };
+$('#btnRefresh').onclick = ()=>{ refreshAll(); loadUsers(); loadVideos(); toast('已刷新'); };
+
+async function refreshAll(){
+  if (!TOKEN) { $('#loginOverlay').classList.remove('hide'); return; }
+  const j = await api('/api/admin/overview');
+  if (!j.ok) return;
+  const d = j.data;
+  $('#whoami').textContent = '管理员在线';
+  $('#kpis').innerHTML = `
+    <div class="kpi"><small>玩家总数</small><b>${fmt(d.users)}</b></div>
+    <div class="kpi y"><small>流通金币总量</small><b>${fmt(d.coins_total)}</b></div>
+    <div class="kpi"><small>注单总数</small><b>${fmt(d.bets)}</b></div>
+    <div class="kpi y"><small>累计投注额</small><b>${fmt(d.stake_total)}</b></div>
+    <div class="kpi g"><small>累计派彩</small><b>${fmt(d.payout_total)}</b></div>
+    <div class="kpi ${d.platform_profit>=0?'g':'r'}"><small>平台净额</small><b>${fmt(d.platform_profit)}</b></div>
+    <div class="kpi y"><small>待结算注单</small><b>${fmt(d.pending_bets)}</b></div>
+    <div class="kpi"><small>今日投注 / 笔</small><b>${fmt(d.today_stake)} / ${fmt(d.today_bets)}</b></div>`;
+  const s = d.season;
+  $('#seasonInfo').textContent = `状态 ${s.status} · 阶段 ${s.phase} · 第 ${s.current_num}/104 场 · 自动 ${s.auto==='1'?'开':'关'}`;
+  if (document.activeElement !== $('#setBet')) $('#setBet').value = s.betting_seconds;
+  if (document.activeElement !== $('#setLive')) $('#setLive').value = s.live_seconds;
+  if (document.activeElement !== $('#setInter')) $('#setInter').value = s.intermission_seconds;
+  $('#setAuto').checked = s.auto === '1';
+  const max = Math.max(1, ...d.series.map(x=>Math.abs(x.delta||0)));
+  $('#chart').innerHTML = d.series.map(x=>`<i style="height:${Math.max(2,Math.abs(x.delta)/max*86)}px;opacity:${x.delta>=0?.9:.55}" title="${x.hr} ${x.delta>=0?'+':''}${x.delta}"></i>`).join('') || '<span class="small">暂无数据</span>';
+  loadBets();
+}
+
+async function loadBets(){
+  const j = await api('/api/admin/bets'); if (!j.ok) return;
+  const rows = j.data;
+  let st=0, pend=0, pay=0;
+  rows.forEach(r=>{ st += r.stake; if(r.status==='pending') pend++; pay += (r.payout||0); });
+  $('#betStats').innerHTML = `投注额 <b>${fmt(st)}</b> · 待结算 <b>${pend}</b> 笔 · 已派彩 <b>${fmt(pay)}</b>`;
+  $('#betBody').innerHTML = rows.map(r=>{
+    const cls = r.status==='win'?'p-win':r.status==='lose'?'p-lose':r.status==='push'?'p-push':'p-pend';
+    const nm = {win:'猜中',lose:'未中',push:'退款',pending:'待结算'}[r.status]||r.status;
+    return `<tr><td>${r.id}</td><td>${r.nickname||r.username}</td><td>#${r.num}</td>
+      <td>${r.market_cn} · ${r.selection_cn}</td><td>${fmt(r.stake)}</td><td>${r.odds.toFixed(2)}</td>
+      <td><span class="pill ${cls}">${nm}</span></td><td class="${r.payout>0?'pos':''}">${r.payout?fmt(r.payout):'-'}</td>
+      <td class="small">${r.created_at||''}</td></tr>`;
+  }).join('') || '<tr><td colspan="9" class="small" style="padding:20px;text-align:center">暂无注单</td></tr>';
+}
+
+async function loadUsers(){
+  const j = await api('/api/admin/users'); if (!j.ok) return;
+  $('#userBody').innerHTML = j.data.map(u=>`<tr>
+    <td>${u.id}</td><td>${u.username}</td><td>${u.nickname||'-'}</td>
+    <td style="color:var(--gold);font-weight:700">${fmt(u.coins)}</td>
+    <td>${u.bet_count}</td><td>${fmt(u.bet_sum)}</td>
+    <td>${u.banned?'<span class="pill p-lose">封禁</span>':(u.role==='admin'?'<span class="pill p-push">管理员</span>':'<span class="pill p-win">正常</span>')}</td>
+    <td class="row" style="gap:5px">
+      <button class="btn sm" data-coin="${u.id}" data-name="${u.nickname||u.username}">调币</button>
+      ${u.role==='admin'?'':`<button class="btn sm ${u.banned?'':'dan'}" data-ban="${u.id}" data-v="${u.banned?0:1}">${u.banned?'解封':'封禁'}</button>`}
+    </td></tr>`).join('');
+  $$('[data-coin]').forEach(b=>b.onclick = ()=>{
+    const v = prompt(`为 ${b.dataset.name} 调整金币（正数增加 / 负数扣减）：`, '1000');
+    if (v===null) return;
+    doCoins(+b.dataset.coin, parseInt(v));
+  });
+  $$('[data-ban]').forEach(b=>b.onclick = async ()=>{
+    const j2 = await api('/api/admin/user/ban','POST',{user_id:+b.dataset.ban, banned: +b.dataset.v===1});
+    toast(j2.ok?'操作成功':j2.error, j2.ok); loadUsers();
+  });
+}
+async function doCoins(uid, delta){
+  if (!delta) return;
+  const reason = prompt('调整原因（会记录到金币流水）：', delta>0?'活动补偿':'违规扣减');
+  if (reason===null) return;
+  const j = await api('/api/admin/user/coins','POST',{user_id:uid, delta, reason});
+  toast(j.ok?('调整成功，当前余额 '+fmt(j.data.coins)):j.error, j.ok);
+  loadUsers(); refreshAll();
+}
+
+async function loadVideos(){
+  const j = await api('/api/admin/videos'); if (!j.ok) return;
+  $('#videoBody').innerHTML = j.data.map(v=>`<tr>
+    <td>${v.id}</td><td>${v.match_id===0?'全局':('#'+v.match_id)}</td><td>${v.title}</td>
+    <td>${v.kind}</td><td class="small" style="max-width:420px;overflow:hidden;text-overflow:ellipsis">${v.url}</td>
+    <td><button class="btn sm dan" data-del="${v.id}">删除</button></td></tr>`).join('')
+    || '<tr><td colspan="6" class="small" style="padding:16px">尚未配置视频源，用户端将只显示官方持权渠道入口</td></tr>';
+  $$('[data-del]').forEach(b=>b.onclick = async ()=>{
+    if (!confirm('确认删除该视频源？')) return;
+    const j2 = await api('/api/admin/videos/delete','POST',{id:+b.dataset.del});
+    toast(j2.ok?'已删除':j2.error, j2.ok); loadVideos();
+  });
+}
+$('#btnAddVideo').onclick = ()=>$('#videoModal').classList.remove('hide');
+$('#vmCancel').onclick = ()=>$('#videoModal').classList.add('hide');
+$('#vmSave').onclick = async ()=>{
+  const j = await api('/api/admin/videos','POST',{match_id:+$('#vmMatch').value||0, title:$('#vmTitle').value,
+    kind:$('#vmKind').value, url:$('#vmUrl').value.trim()});
+  if (!j.ok) return toast(j.error, false);
+  $('#videoModal').classList.add('hide'); toast('已添加'); loadVideos();
+};
+
+$$('[data-season]').forEach(b=>b.onclick = async ()=>{
+  const a = b.dataset.season;
+  if (a==='reset' && !confirm('重置赛季会清空全部注单并恢复所有玩家初始金币，确认？')) return;
+  const j = await api('/api/admin/season','POST',{action:a});
+  toast(j.ok?'操作成功':j.error, j.ok); refreshAll();
+});
+$('#btnGoto').onclick = async ()=>{
+  const n = parseInt($('#gotoNum').value||0);
+  if (!n) return toast('请输入场次 1-104', false);
+  const j = await api('/api/admin/season','POST',{action:'goto', num:n});
+  toast(j.ok?('已跳转到第 '+n+' 场'):j.error, j.ok); refreshAll();
+};
+$('#btnSaveSet').onclick = async ()=>{
+  const j = await api('/api/admin/settings','POST',{betting_seconds:+$('#setBet').value,
+    live_seconds:+$('#setLive').value, intermission_seconds:+($('#setInter').value||5), auto:$('#setAuto').checked});
+  toast(j.ok?'设置已保存':j.error, j.ok); refreshAll();
+};
+
+if (TOKEN) refreshAll(); else $('#loginOverlay').classList.remove('hide');
+setInterval(()=>{ if (TOKEN) refreshAll(); }, 4000);
+</script>
+</body>
+</html>

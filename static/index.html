@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>绿茵竞猜场 · 2026 世界杯模拟下注</title>
+<style>
+:root{
+  --bg:#080d16; --panel:#101a29; --panel2:#152235; --line:#1f3149;
+  --txt:#e8f0fa; --sub:#8ba3bf; --green:#22c55e; --green2:#16a34a;
+  --gold:#f5b301; --red:#ef4444; --blue:#38bdf8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 700px at 15% -10%,#12283d 0%,transparent 60%),radial-gradient(900px 600px at 100% 0%,#1b2a1c 0%,transparent 55%),var(--bg);
+  color:var(--txt);font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+.hide{display:none!important}
+/* ---------- 顶部 */
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;padding:12px 22px;
+  background:rgba(8,13,22,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.5px}
+.brand .ball{width:34px;height:34px;border-radius:50%;background:conic-gradient(#fff 0 25%,#0b0b0b 0 50%,#fff 0 75%,#0b0b0b 0);
+  box-shadow:0 0 0 3px rgba(34,197,94,.25),0 6px 18px rgba(34,197,94,.25)}
+.brand small{display:block;font-size:10px;color:var(--sub);font-weight:500;letter-spacing:2px}
+nav{display:flex;gap:6px;margin-left:10px}
+nav button{background:transparent;color:var(--sub);padding:8px 14px;border-radius:10px;font-size:14px;font-weight:600}
+nav button.on{background:var(--panel2);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+.spacer{flex:1}
+.coinpill{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2a2007,#3a2c08);
+  border:1px solid #6b5310;padding:7px 14px;border-radius:999px;font-weight:800;color:var(--gold)}
+.coinpill .dot{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe28a,#e0a100);
+  box-shadow:inset 0 0 0 2px #8a6500}
+.userbox{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#0e7490);display:grid;place-items:center;font-weight:800}
+.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-size:13px}
+.ghost:hover{border-color:#2f4a6b}
+.primary{background:linear-gradient(135deg,var(--green),var(--green2));color:#04140a;font-weight:800;padding:9px 16px;border-radius:10px}
+.primary:hover{filter:brightness(1.08)}
+/* ---------- 赛季条 */
+.seasonbar{margin:16px 22px 0;background:linear-gradient(100deg,#0f1f1a,#122033 60%,#1b1730);
+  border:1px solid var(--line);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.seasonbar .tag{font-size:11px;letter-spacing:2px;color:var(--green);border:1px solid rgba(34,197,94,.4);
+  padding:4px 9px;border-radius:999px;font-weight:700}
+.seasonbar h2{font-size:18px}
+.seasonbar .meta{color:var(--sub);font-size:13px}
+.bar{flex:1;min-width:180px;height:8px;background:#0b1524;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),#a3e635);transition:width .9s linear}
+.liveDot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(239,68,68,.7);animation:pulse 1.4s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+/* ---------- 主体 */
+main{padding:18px 22px 60px;max-width:1420px;margin:0 auto}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{background:var(--panel);border:1px solid var(--line);color:var(--sub);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600}
+.chip.on{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.5);color:#b9f6ce}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.card{background:linear-gradient(180deg,var(--panel),#0c1626);border:1px solid var(--line);border-radius:16px;
+  padding:14px 15px;cursor:pointer;transition:.18s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-2px);border-color:#2b4563;box-shadow:0 14px 30px rgba(0,0,0,.35)}
+.card.live{border-color:rgba(239,68,68,.45);box-shadow:0 0 0 1px rgba(239,68,68,.15) inset}
+.card .top{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--sub);margin-bottom:10px}
+.badge{padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px}
+.b-up{background:#1b2b3f;color:#93b4d4}
+.b-open{background:rgba(34,197,94,.16);color:#5ee98b;border:1px solid rgba(34,197,94,.35)}
+.b-live{background:rgba(239,68,68,.16);color:#ff8f8f;border:1px solid rgba(239,68,68,.35)}
+.b-fin{background:#222b36;color:#9aa8b8}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:4px 0 12px}
+.team{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.team.right{justify-content:flex-end;text-align:right}
+.team .fl{font-size:20px;line-height:1}
+.score{font-size:22px;font-weight:900;letter-spacing:1px;min-width:64px;text-align:center}
+.score.vs{font-size:13px;color:var(--sub);font-weight:600}
+.minute{color:var(--red);font-size:11px;text-align:center;font-weight:700;margin-top:-4px}
+.oddsrow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.oddbtn{background:#0e1b2b;border:1px solid #20344c;border-radius:10px;padding:8px 4px;color:#cfe3f7;
+  font-size:12px;display:flex;flex-direction:column;gap:2px;align-items:center;transition:.15s}
+.oddbtn:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.55)}
+.oddbtn b{font-size:15px;color:#fff}
+.oddbtn span{color:var(--sub);font-size:10px}
+.empty{padding:60px 20px;text-align:center;color:var(--sub)}
+/* ---------- 列表 */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:11px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--sub);font-weight:600;font-size:12px}
+tr:hover td{background:rgba(255,255,255,.02)}
+.pill{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.p-win{background:rgba(34,197,94,.18);color:#5ee98b}
+.p-lose{background:rgba(239,68,68,.16);color:#ff9d9d}
+.p-pend{background:rgba(245,179,1,.16);color:#f7c948}
+.p-push{background:#24303f;color:#a9bbcd}
+.pos{color:#5ee98b}.neg{color:#ff9d9d}
+.rankRow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.rankNo{width:28px;text-align:center;font-weight:900;color:var(--sub)}
+.rankNo.g1{color:#ffd54a}.rankNo.g2{color:#cfd8e3}.rankNo.g3{color:#d08a4e}
+/* ---------- 弹层 */
+.overlay{position:fixed;inset:0;background:rgba(3,7,13,.78);backdrop-filter:blur(6px);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{width:100%;max-width:420px;background:linear-gradient(180deg,#12202f,#0b1522);border:1px solid #24384f;
+  border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal h3{font-size:18px;margin-bottom:4px}
+.modal .sub{color:var(--sub);font-size:12px;margin-bottom:16px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--sub);margin-bottom:6px}
+.field input,.field select{width:100%;background:#0a1420;border:1px solid #22374f;color:var(--txt);
+  padding:11px 12px;border-radius:10px;font-size:14px;outline:none}
+.field input:focus{border-color:var(--green)}
+.amounts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.amounts button{background:#0f1d2c;border:1px solid #22374f;color:#cfe3f7;padding:7px 13px;border-radius:9px;font-size:12px;font-weight:700}
+.amounts button:hover{border-color:var(--green)}
+.summary{background:#0a1420;border:1px dashed #24384f;border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px}
+.summary .row{display:flex;justify-content:space-between;padding:4px 0;color:var(--sub)}
+.summary .row b{color:var(--gold);font-size:15px}
+.authTabs{display:flex;gap:8px;margin-bottom:18px}
+.authTabs button{flex:1;background:#0c1826;border:1px solid #22374f;color:var(--sub);padding:10px;border-radius:10px;font-weight:700}
+.authTabs button.on{background:rgba(34,197,94,.14);color:#b9f6ce;border-color:rgba(34,197,94,.5)}
+/* ---------- 详情抽屉 */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,94vw);background:#0b1522;border-left:1px solid #24384f;
+  z-index:90;transform:translateX(100%);transition:.26s;overflow-y:auto}
+.drawer.open{transform:translateX(0)}
+.drawer .dhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0b1522;z-index:2}
+.dbody{padding:20px}
+.dscore{display:flex;align-items:center;justify-content:center;gap:20px;padding:18px 0}
+.dscore .t{text-align:center;flex:1}
+.dscore .t .fl{font-size:38px}
+.dscore .t .n{font-weight:800;margin-top:6px}
+.dscore .sc{font-size:36px;font-weight:900}
+.infogrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.info{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.info small{color:var(--sub);font-size:11px}
+.info div{font-weight:700;margin-top:3px;font-size:13px}
+.goals{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:13px}
+.goals .g{display:flex;justify-content:space-between;padding:5px 0;color:#c8d8ea;border-bottom:1px dashed #1c2c3f}
+.goals .g:last-child{border:none}
+.videobox{background:#0a1420;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:10px}
+.videobox .vhead{padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.videobox video,.videobox iframe{width:100%;aspect-ratio:16/9;display:block;background:#000;border:0}
+.channels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.channels a{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.channels a:hover{border-color:var(--green);color:#b9f6ce}
+.notice{font-size:11px;color:#7e93aa;line-height:1.7;margin-top:10px}
+/* ---------- toast */
+#toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;
+  background:#16283c;border:1px solid #2b4360;color:#e8f0fa;padding:12px 20px;border-radius:12px;font-size:13px;z-index:200;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:760px){
+  header{padding:10px 12px;gap:8px;flex-wrap:wrap}
+  nav{order:3;width:100%;overflow:auto}
+  .seasonbar{margin:12px 12px 0;padding:12px}
+  main{padding:14px 12px 60px}
+  .grid{grid-template-columns:1fr}
+  .userbox .name{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="ball"></div><div>绿茵竞猜场<small>WORLD CUP 2026 · VIRTUAL COINS</small></div></div>
+  <nav>
+    <button data-view="home" class="on">赛程下注</button>
+    <button data-view="bets">我的注单</button>
+    <button data-view="rank">排行榜</button>
+    <button data-view="wallet">金币流水</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="coinpill"><span class="dot"></span><span id="coinNum">0</span></div>
+  <button class="ghost" id="btnCheckin">每日签到 +1000</button>
+  <div class="userbox">
+    <div class="avatar" id="avatar">?</div>
+    <span class="name" id="nickname">未登录</span>
+    <button class="ghost" id="btnLogout">退出</button>
+  </div>
+</header>
+
+<div class="seasonbar">
+  <span class="tag">赛季回放</span>
+  <div>
+    <h2 id="seasonTitle">等待开始</h2>
+    <div class="meta" id="seasonMeta">真实 2026 世界杯赛程与比分重现 · 全部为虚拟金币</div>
+  </div>
+  <div class="bar"><i id="seasonBar"></i></div>
+  <div id="seasonAction"></div>
+</div>
+
+<main>
+  <section id="view-home">
+    <div class="toolbar" id="filters">
+      <button class="chip on" data-f="current">当前场次</button>
+      <button class="chip" data-f="group">小组赛</button>
+      <button class="chip" data-f="r32">1/16</button>
+      <button class="chip" data-f="r16">1/8</button>
+      <button class="chip" data-f="qf">1/4</button>
+      <button class="chip" data-f="sf">半决赛</button>
+      <button class="chip" data-f="final">决赛</button>
+      <button class="chip" data-f="finished">已结束</button>
+      <button class="chip" data-f="all">全部 104 场</button>
+    </div>
+    <div class="grid" id="matchGrid"></div>
+    <div class="empty hide" id="matchEmpty">暂无比赛</div>
+  </section>
+
+  <section id="view-bets" class="hide">
+    <div class="toolbar"><h2 style="font-size:18px">我的注单</h2><span class="chip" id="betSummary">—</span></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:auto">
+      <table><thead><tr><th>场次</th><th>对阵</th><th>盘口 / 选择</th><th>金额</th><th>赔率</th><th>状态</th><th>返还</th><th>时间</th></tr></thead>
+      <tbody id="betBody"></tbody></table>
+    </div>
+  </section>
+
+  <section id="view-rank" class="hide">
+    <div class="toolbar"><h2 style="font-size:18px">金币排行榜</h2><span class="chip">按余额排序 · 前 30 名</span></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px" id="rankList"></div>
+  </section>
+
+  <section id="view-wallet" class="hide">
+    <div class="toolbar"><h2 style="font-size:18px">金币流水</h2>
+      <button class="ghost" id="btnRelief">领取破产救济金 500</button></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:auto">
+      <table><thead><tr><th>时间</th><th>变动</th><th>余额</th><th>说明</th></tr></thead><tbody id="walletBody"></tbody></table>
+    </div>
+  </section>
+</main>
+
+<!-- 登录 -->
+<div class="overlay" id="authOverlay">
+  <div class="modal">
+    <h3>进入绿茵竞猜场</h3>
+    <div class="sub">2026 世界杯真实赛程 · 虚拟金币模拟下注 · 不涉及任何真实资金</div>
+    <div class="authTabs">
+      <button class="on" data-auth="login">登录</button>
+      <button data-auth="reg">注册</button>
+    </div>
+    <div class="field"><label>账号</label><input id="auName" placeholder="3-20 位字母/数字" autocomplete="username"></div>
+    <div class="field" id="nickField" style="display:none"><label>昵称</label><input id="auNick" placeholder="显示名称"></div>
+    <div class="field"><label>密码</label><input id="auPass" type="password" placeholder="至少 4 位" autocomplete="current-password"></div>
+    <button class="primary" style="width:100%;padding:13px;font-size:15px" id="btnAuth">登录</button>
+    <div class="notice">新玩家注册即送 10,000 虚拟金币。本系统仅用于娱乐与产品演示，不提供任何真实博彩、充值或提现功能。</div>
+  </div>
+</div>
+
+<!-- 下注 -->
+<div class="overlay hide" id="betOverlay">
+  <div class="modal">
+    <h3 id="bmTitle">确认下注</h3>
+    <div class="sub" id="bmSub"></div>
+    <div class="amounts">
+      <button data-amt="100">100</button><button data-amt="500">500</button>
+      <button data-amt="1000">1,000</button><button data-amt="5000">5,000</button>
+      <button data-amt="max">全部</button>
+    </div>
+    <div class="field"><label>下注金币</label><input id="bmStake" type="number" value="100" min="10" step="10"></div>
+    <div class="summary">
+      <div class="row"><span>盘口</span><span id="bmMarket"></span></div>
+      <div class="row"><span>选择</span><span id="bmSel"></span></div>
+      <div class="row"><span>赔率</span><span id="bmOdds"></span></div>
+      <div class="row" style="border-top:1px dashed #24384f;margin-top:6px;padding-top:8px">
+        <span>猜中可得</span><b id="bmWin">0</b></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="ghost" style="flex:1" id="bmCancel">取消</button>
+      <button class="primary" style="flex:2" id="bmConfirm">确认下注</button>
+    </div>
+  </div>
+</div>
+
+<!-- 详情 -->
+<div class="drawer" id="drawer">
+  <div class="dhead"><b id="dTitle">比赛详情</b><button class="ghost" id="dClose">关闭</button></div>
+  <div class="dbody" id="dBody"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let TOKEN = localStorage.getItem('wc_token') || '';
+let ME = null, STATE = null, MATCHES = [], VIEW = 'home', FILTER = 'current';
+let BET_CTX = null, AUTH_MODE = 'login', POLL_TIMER = null;
+
+function fmt(n){ return (n||0).toLocaleString('zh-CN'); }
+function toast(msg, ok=true){
+  const t = $('#toast'); t.textContent = msg;
+  t.style.borderColor = ok ? '#2b4360' : '#7f2b2b';
+  t.classList.add('show'); clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+async function api(path, method='GET', body){
+  const opt = {method, headers:{'Content-Type':'application/json'}};
+  if (TOKEN) opt.headers['Authorization'] = 'Bearer ' + TOKEN;
+  if (body) opt.body = JSON.stringify(body);
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(()=>({ok:false,error:'网络错误'}));
+  if (r.status === 401 && !path.includes('login')){
+    localStorage.removeItem('wc_token'); TOKEN=''; ME=null;
+    $('#authOverlay').classList.remove('hide');
+  }
+  return j;
+}
+
+/* ---------------- 认证 ---------------- */
+$$('[data-auth]').forEach(b=>b.onclick=()=>{
+  AUTH_MODE = b.dataset.auth;
+  $$('[data-auth]').forEach(x=>x.classList.toggle('on', x===b));
+  $('#nickField').style.display = AUTH_MODE==='reg' ? 'block':'none';
+  $('#btnAuth').textContent = AUTH_MODE==='reg' ? '注册并领取 10,000 金币' : '登录';
+});
+$('#btnAuth').onclick = async ()=>{
+  const u = $('#auName').value.trim(), p = $('#auPass').value, n = $('#auNick').value.trim();
+  if (!u || !p) return toast('请填写账号和密码', false);
+  const path = AUTH_MODE==='reg' ? '/api/register' : '/api/login';
+  const j = await api(path, 'POST', {username:u, password:p, nickname:n});
+  if (!j.ok) return toast(j.error || '操作失败', false);
+  TOKEN = j.data.token; localStorage.setItem('wc_token', TOKEN);
+  ME = j.data.user; $('#authOverlay').classList.add('hide');
+  toast(AUTH_MODE==='reg' ? '注册成功，已到账 10,000 金币' : '欢迎回来，' + (ME.nickname||ME.username));
+  boot();
+};
+$('#btnLogout').onclick = ()=>{
+  TOKEN=''; ME=null; localStorage.removeItem('wc_token');
+  $('#authOverlay').classList.remove('hide'); toast('已退出登录');
+};
+$('#btnCheckin').onclick = async ()=>{
+  const j = await api('/api/checkin','POST',{});
+  if (!j.ok) return toast(j.error, false);
+  ME.coins = j.data.coins; renderMe(); toast('签到成功 +' + fmt(j.data.gain) + ' 金币');
+};
+$('#btnRelief').onclick = async ()=>{
+  const j = await api('/api/relief','POST',{});
+  if (!j.ok) return toast(j.error, false);
+  ME.coins = j.data.coins; renderMe(); loadWallet(); toast('救济金 +' + fmt(j.data.gain));
+};
+
+/* ---------------- 视图 ---------------- */
+$$('nav button').forEach(b=>b.onclick=()=>{
+  VIEW = b.dataset.view;
+  $$('nav button').forEach(x=>x.classList.toggle('on', x===b));
+  ['home','bets','rank','wallet'].forEach(v=>$('#view-'+v).classList.toggle('hide', v!==VIEW));
+  if (VIEW==='bets') loadBets();
+  if (VIEW==='rank') loadRank();
+  if (VIEW==='wallet') loadWallet();
+});
+$$('#filters .chip').forEach(b=>b.onclick=()=>{
+  FILTER = b.dataset.f;
+  $$('#filters .chip').forEach(x=>x.classList.toggle('on', x===b));
+  renderMatches();
+});
+
+function renderMe(){
+  if (!ME) return;
+  $('#coinNum').textContent = fmt(ME.coins);
+  $('#nickname').textContent = ME.nickname || ME.username;
+  $('#avatar').textContent = (ME.nickname||ME.username||'?').slice(0,1).toUpperCase();
+}
+
+/* ---------------- 赛程 ---------------- */
+function statusBadge(m){
+  if (m.status==='live') return '<span class="badge b-live">● 直播中</span>';
+  if (m.status==='open') return '<span class="badge b-open">可下注</span>';
+  if (m.status==='finished'||m.status==='settled') return '<span class="badge b-fin">已结束</span>';
+  return '<span class="badge b-up">未开始</span>';
+}
+function matchScore(m){
+  if (m.status==='live' && m.live){
+    return `<div><div class="score">${m.live.s1} : ${m.live.s2}</div><div class="minute">第 ${m.live.minute}'</div></div>`;
+  }
+  if ((m.status==='finished'||m.status==='settled') && m.score){
+    const s = m.score.ft;
+    const et = m.score.et && m.score.et[0]!=null ? `<div class="minute" style="color:#f5b301">加时 ${m.score.et[0]}-${m.score.et[1]}</div>`:'';
+    return `<div><div class="score">${s[0]} : ${s[1]}</div>${et}</div>`;
+  }
+  const hm = (m.time||'').split(' ')[0];
+  return `<div class="score vs">${m.date.slice(5)}<br><span style="font-size:11px">${hm} 当地</span></div>`;
+}
+function oddsHtml(m){
+  if (!m.odds) return '';
+  if (m.status!=='open') return '';
+  const o = m.odds;
+  return `<div class="oddsrow">
+    <button class="oddbtn" data-bet="1x2|home"><span>${m.team1_cn} 胜</span><b>${o['1x2'].home}</b></button>
+    <button class="oddbtn" data-bet="1x2|draw"><span>平局</span><b>${o['1x2'].draw}</b></button>
+    <button class="oddbtn" data-bet="1x2|away"><span>${m.team2_cn} 胜</span><b>${o['1x2'].away}</b></button>
+  </div>`;
+}
+function matchCard(m){
+  return `<div class="card ${m.status==='live'?'live':''}" data-id="${m.id}">
+    <div class="top"><span>${m.stage_cn}${m.group?' · '+m.group:''} · 第${m.num}场</span>${statusBadge(m)}</div>
+    <div class="teams">
+      <div class="team"><span class="fl">${m.flag1}</span><span>${m.team1_cn}</span></div>
+      ${matchScore(m)}
+      <div class="team right"><span>${m.team2_cn}</span><span class="fl">${m.flag2}</span></div>
+    </div>
+    ${oddsHtml(m) || `<div style="font-size:11px;color:#7e93aa;text-align:center;padding:6px 0">${m.venue||''}</div>`}
+  </div>`;
+}
+function renderMatches(){
+  let list = MATCHES;
+  if (FILTER==='current') list = MATCHES.filter(m=>['open','live'].includes(m.status));
+  else if (FILTER==='finished') list = MATCHES.filter(m=>['finished','settled'].includes(m.status));
+  else if (FILTER!=='all') list = MATCHES.filter(m=>m.stage===FILTER);
+  list = list.slice().sort((a,b)=>{
+    const rank = x => x.status==='live'?0:x.status==='open'?1:x.status==='upcoming'?2:3;
+    return rank(a)-rank(b) || a.num-b.num;
+  });
+  const hint = (FILTER==='current' && list.length<3)
+    ? `<div class="card" style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:130px;color:var(--muted);font-size:13px;border-style:dashed;background:transparent;cursor:default">当前只有这 1 场在下注或比赛中，结算后自动进入下一场 · 完整 104 场见「全部赛程」</div>`
+    : '';
+  $('#matchGrid').innerHTML = list.map(matchCard).join('') + hint;
+  $('#matchEmpty').classList.toggle('hide', list.length>0);
+  $$('#matchGrid .card').forEach(c=>c.onclick = e=>{
+    if (!c.dataset.id) return;
+    const betBtn = e.target.closest('[data-bet]');
+    if (betBtn){ e.stopPropagation(); openBet(+c.dataset.id, betBtn.dataset.bet); return; }
+    openDetail(+c.dataset.id);
+  });
+}
+
+/* ---------------- 下注 ---------------- */
+function openBet(id, key){
+  const m = MATCHES.find(x=>x.id===id);
+  if (!m || !m.odds) return;
+  const [market, sel] = key.split('|');
+  let odds = 0, label = '', marketName = '';
+  if (market==='1x2'){ odds=m.odds['1x2'][sel]; marketName='胜平负（90分钟）';
+    label = sel==='home'?m.team1_cn+' 胜':sel==='draw'?'平局':m.team2_cn+' 胜'; }
+  BET_CTX = {m, market, sel, odds, label, marketName};
+  $('#bmTitle').textContent = m.team1_cn + ' vs ' + m.team2_cn;
+  $('#bmSub').textContent = m.stage_cn + ' · 第' + m.num + '场 · 比赛时间 ' + m.date;
+  $('#bmMarket').textContent = marketName;
+  $('#bmSel').textContent = label;
+  $('#bmOdds').textContent = odds.toFixed(2);
+  $('#bmStake').value = 100;
+  updWin();
+  $('#betOverlay').classList.remove('hide');
+}
+function updWin(){
+  if (!BET_CTX) return;
+  const st = Math.max(0, parseInt($('#bmStake').value||0));
+  $('#bmWin').textContent = fmt(Math.round(st * BET_CTX.odds)) + ' 金币';
+}
+$('#bmStake').oninput = updWin;
+$$('.amounts button').forEach(b=>b.onclick=()=>{
+  $('#bmStake').value = b.dataset.amt==='max' ? (ME?ME.coins:0) : b.dataset.amt;
+  updWin();
+});
+$('#bmCancel').onclick = ()=>$('#betOverlay').classList.add('hide');
+$('#bmConfirm').onclick = async ()=>{
+  if (!BET_CTX) return;
+  const stake = parseInt($('#bmStake').value||0);
+  if (stake < 10) return toast('最低下注 10 金币', false);
+  $('#bmConfirm').disabled = true;
+  const j = await api('/api/bet','POST',{match_id:BET_CTX.m.id, market:BET_CTX.market, selection:BET_CTX.sel, stake});
+  $('#bmConfirm').disabled = false;
+  if (!j.ok) return toast(j.error || '下注失败', false);
+  ME.coins = j.data.coins; renderMe();
+  toast('下注成功，猜中可得 ' + fmt(j.data.potential));
+  $('#betOverlay').classList.add('hide');
+  refresh();
+};
+
+/* ---------------- 结算数据 ---------------- */
+async function loadBets(){
+  const j = await api('/api/bets');
+  if (!j.ok) return;
+  const rows = j.data;
+  const pend = rows.filter(r=>r.status==='pending').length;
+  const win = rows.filter(r=>r.status==='win').length;
+  const total = rows.reduce((s,r)=>s+(r.payout||0),0);
+  $('#betSummary').textContent = `共 ${rows.length} 注 · 待结算 ${pend} · 猜中 ${win} · 累计返还 ${fmt(total)}`;
+  $('#betBody').innerHTML = rows.length ? rows.map(r=>{
+    const cls = r.status==='win'?'p-win':r.status==='lose'?'p-lose':r.status==='push'?'p-push':'p-pend';
+    const name = {win:'猜中', lose:'未中', push:'退款', pending:'待结算'}[r.status]||r.status;
+    return `<tr>
+      <td>#${r.num}</td>
+      <td>${r.team1_cn} vs ${r.team2_cn}<div style="color:#7e93aa;font-size:11px">${r.result?('比分 '+r.result):''}</div></td>
+      <td>${r.market_cn}<div style="color:#7e93aa;font-size:11px">${r.selection_cn}</div></td>
+      <td>${fmt(r.stake)}</td><td>${r.odds.toFixed(2)}</td>
+      <td><span class="pill ${cls}">${name}</span></td>
+      <td class="${r.payout>0?'pos':''}">${r.payout?fmt(r.payout):'-'}</td>
+      <td style="color:#7e93aa;font-size:11px">${r.created_at||''}</td></tr>`;
+  }).join('') : `<tr><td colspan="8" class="empty">还没有注单，去赛程页下第一注吧</td></tr>`;
+}
+async function loadRank(){
+  const j = await api('/api/leaderboard');
+  if (!j.ok) return;
+  $('#rankList').innerHTML = j.data.map((u,i)=>`
+    <div class="rankRow">
+      <div class="rankNo ${i<3?'g'+(i+1):''}">${i+1}</div>
+      <div class="avatar">${(u.nickname||u.username||'?').slice(0,1).toUpperCase()}</div>
+      <div style="flex:1"><div style="font-weight:700">${u.nickname||u.username}</div>
+      <div style="color:#7e93aa;font-size:11px">@${u.username}</div></div>
+      <div style="color:var(--gold);font-weight:800">${fmt(u.coins)}</div>
+    </div>`).join('') || '<div class="empty">暂无玩家</div>';
+}
+async function loadWallet(){
+  const j = await api('/api/wallet');
+  if (!j.ok) return;
+  $('#walletBody').innerHTML = j.data.map(r=>`
+    <tr><td style="color:#7e93aa;font-size:11px">${r.created_at}</td>
+    <td class="${r.delta>=0?'pos':'neg'}">${r.delta>=0?'+':''}${fmt(r.delta)}</td>
+    <td>${fmt(r.balance_after)}</td><td>${r.reason}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="empty">暂无流水</td></tr>';
+}
+
+/* ---------------- 详情 + 视频 ---------------- */
+const OFFICIAL = [
+  {n:'FIFA+ 官方平台', u:'https://www.plus.fifa.com/'},
+  {n:'FIFA 官网', u:'https://www.fifa.com/'},
+  {n:'央视 CCTV-5 直播', u:'https://tv.cctv.com/live/cctv5/'},
+  {n:'小红书（持权转播）', u:'https://www.xiaohongshu.com/'},
+  {n:'咪咕视频', u:'https://www.miguvideo.com/'},
+  {n:'抖音体育', u:'https://www.douyin.com/'},
+  {n:'YouTube FIFA 频道', u:'https://www.youtube.com/@FIFA'},
+  {n:'Sofascore 数据', u:'https://www.sofascore.com/'}
+];
+async function openDetail(id){
+  const j = await api('/api/match/'+id);
+  if (!j.ok) return toast(j.error, false);
+  const m = j.data;
+  $('#dTitle').textContent = '第' + m.num + '场 · ' + m.stage_cn;
+  let goalsHtml = '';
+  if (m.goals && (m.goals.g1.length || m.goals.g2.length)){
+    const gs = [
+      ...m.goals.g1.map(g=>({...g, side:m.team1_cn, cls:'pos'})),
+      ...m.goals.g2.map(g=>({...g, side:m.team2_cn, cls:'neg'}))
+    ].sort((a,b)=>parseInt(a.minute)-parseInt(b.minute));
+    goalsHtml = `<div class="goals"><div style="font-weight:700;margin-bottom:6px">进球记录</div>` +
+      gs.map(g=>`<div class="g"><span>${g.minute}' ${g.side}</span><span>${g.name}${g.penalty?' (点球)':''}</span></div>`).join('') + `</div>`;
+  }
+  const sc = m.score ? `${m.score.ft[0]} : ${m.score.ft[1]}` : 'VS';
+  let videoHtml = '';
+  if (m.videos && m.videos.length){
+    const v = m.videos[0];
+    if (v.kind === 'embed'){
+      videoHtml = `<div class="videobox"><div class="vhead"><span>${v.title}</span><span style="color:#7e93aa">嵌入源</span></div>
+        <iframe src="${v.url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>`;
+    } else {
+      videoHtml = `<div class="videobox"><div class="vhead"><span>${v.title}</span><span style="color:#7e93aa">${v.kind.toUpperCase()}</span></div>
+        <video id="dVideo" controls playsinline poster=""></video></div>`;
+      setTimeout(()=>attachVideo(v), 60);
+    }
+  }
+  $('#dBody').innerHTML = `
+    <div class="dscore">
+      <div class="t"><div class="fl">${m.flag1}</div><div class="n">${m.team1_cn}</div></div>
+      <div class="sc">${sc}</div>
+      <div class="t"><div class="fl">${m.flag2}</div><div class="n">${m.team2_cn}</div></div>
+    </div>
+    <div style="text-align:center;color:#8ba3bf;font-size:12px">${statusBadge(m)}
+      ${m.live?`<span style="color:#ef4444"> 第 ${m.live.minute}'</span>`:''}</div>
+    <div class="infogrid">
+      <div class="info"><small>比赛时间（当地）</small><div>${m.date} ${(m.time||'').split(' ')[0]} <span style="color:var(--muted);font-size:11px">${(m.time||'').split(' ')[1]||''}</span></div></div>
+      <div class="info"><small>比赛场馆</small><div>${m.venue||'—'}</div></div>
+      <div class="info"><small>赛事阶段</small><div>${m.stage_cn}${m.group?' · '+m.group:''}</div></div>
+      <div class="info"><small>数据来源</small><div>openfootball 公开数据集</div></div>
+    </div>
+    ${goalsHtml}
+    <div style="font-weight:700;margin:16px 0 4px">赛事视频</div>
+    ${videoHtml}
+    <div class="channels">${OFFICIAL.map(o=>`<a href="${o.u}" target="_blank" rel="noopener">${o.n}<span>↗</span></a>`).join('')}</div>
+    <div class="notice">
+      2026 世界杯已于 2026-07-19 结束，当前赛季为「真实赛程回放」，比分与进球数据完全取自公开真实赛果，未做任何修改。<br>
+      胜平负 / 大小球 2.5 / 双方进球均按 <b>90 分钟（含伤停补时）</b>比分结算，加时赛与点球大战不计入；正确比分盘同理。<br>
+      视频区仅提供官方持权渠道入口；如需内嵌播放，请在管理端配置您拥有合法授权的直播/回放源（HLS、MP4 或官方嵌入页），系统不内置任何第三方盗链。
+    </div>`;
+  $('#drawer').classList.add('open');
+}
+function attachVideo(v){
+  const el = $('#dVideo'); if (!el) return;
+  if (v.kind === 'hls' || v.url.includes('.m3u8')){
+    if (window.Hls && window.Hls.isSupported()){
+      const hls = new window.Hls(); hls.loadSource(v.url); hls.attachMedia(el);
+    } else { el.src = v.url; }
+  } else { el.src = v.url; }
+}
+$('#dClose').onclick = ()=>$('#drawer').classList.remove('open');
+
+/* ---------------- 轮询 ---------------- */
+function renderSeason(st){
+  STATE = st;
+  const c = st.current || {};
+  if (st.season_status === 'idle'){
+    $('#seasonTitle').textContent = '赛季待开始';
+    $('#seasonMeta').textContent = '真实 104 场赛程已就绪 · 全部使用虚拟金币';
+    $('#seasonAction').innerHTML = `<button class="primary" id="btnStartSeason">开始回放赛季</button>`;
+    $('#seasonBar').style.width = '0%';
+  } else if (st.season_status === 'ended'){
+    $('#seasonTitle').textContent = '赛季已结束';
+    $('#seasonMeta').textContent = '全部 104 场已结算 · 感谢参与';
+    $('#seasonAction').innerHTML = '';
+    $('#seasonBar').style.width = '100%';
+  } else {
+    const phaseCn = {betting:'下注中', live:'比赛中', intermission:'场间休息', paused:'已暂停'}[st.phase] || st.phase;
+    $('#seasonTitle').textContent = `第 ${st.current_num} / 104 场 · ${c.team1_cn||''} vs ${c.team2_cn||''}`;
+    const liveTxt = st.phase==='live' && c.live ? ` · 第 ${c.live.minute}'` : '';
+    $('#seasonMeta').innerHTML = `${phaseCn}${liveTxt} · ${c.stage_cn||''} · 剩余 <b style="color:#f5b301">${st.remain}s</b> · 虚拟金币玩法`;
+    const pct = Math.min(100, st.current_num/104*100);
+    $('#seasonBar').style.width = pct + '%';
+    $('#seasonAction').innerHTML = st.season_status==='running' ? '' :
+      `<button class="primary" id="btnStartSeason">继续赛季</button>`;
+  }
+  const btn = $('#btnStartSeason');
+  if (btn) btn.onclick = startSeason;
+}
+async function startSeason(){
+  const j = await api('/api/season/start','POST',{action:'start'});
+  if (!j.ok) return toast(j.error, false);
+  toast('赛季开始，关注当前场次的下注倒计时');
+  refresh();
+}
+async function refresh(){
+  const st = await api('/api/state');
+  if (st.ok){ renderSeason(st.data); }
+  const ms = await api('/api/matches');
+  if (ms.ok){ MATCHES = ms.data; renderMatches(); }
+  if (VIEW==='bets') loadBets();
+}
+async function boot(){
+  if (!TOKEN) { $('#authOverlay').classList.remove('hide'); return; }
+  const me = await api('/api/me');
+  if (!me.ok){ return; }
+  ME = me.data; renderMe();
+  $('#authOverlay').classList.add('hide');
+  await refresh();
+  if (POLL_TIMER) clearInterval(POLL_TIMER);
+  POLL_TIMER = setInterval(refresh, 2000);
+}
+boot();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" defer></script>
+</body>
+</html>
