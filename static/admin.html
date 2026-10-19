@@ -62,6 +62,7 @@ background:#16283c;border:1px solid #2b4360;padding:11px 18px;border-radius:11px
   <div class="logo"><i></i><div>绿茵竞猜场 · 后台<small>ADMIN CONSOLE</small></div></div>
   <div class="spacer"></div>
   <span id="whoami" class="small"></span>
+  <button class="btn" id="btnPwd">修改密码</button>
   <button class="btn" id="btnRefresh">刷新</button>
   <button class="btn dan" id="btnLogout">退出</button>
 </header>
@@ -114,10 +115,47 @@ background:#16283c;border:1px solid #2b4360;padding:11px 18px;border-radius:11px
   </div>
 
   <div class="panel">
+    <div class="ph"><b>访问地址</b><div class="spacer"></div>
+      <span class="small">手机端请用「局域网」或「公网」地址访问，勿用 127.0.0.1</span></div>
+    <div class="pb">
+      <div class="f"><label>本机（仅本电脑可用）</label><input id="acLocal" readonly style="background:#0c1622;color:#8ba3bf"></div>
+      <div class="f"><label>局域网地址（同一 WiFi 的手机可用）</label><input id="acLan" readonly style="background:#0c1622;color:#7cc4ff"></div>
+      <div class="f"><label>公网地址（默认隐藏，仅管理员可临时显示）</label>
+        <div class="row" style="gap:8px;margin:0">
+          <input id="acPublic" placeholder="https://xxx.trycloudflare.com" style="flex:1" readonly>
+          <button class="btn sm" id="acReveal">显示真实地址</button>
+        </div>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn sm" id="acCopy">复制局域网地址</button>
+        <button class="btn sm" id="acCopyPub">复制公网地址</button>
+        <button class="btn sm" id="acOpen">打开公网地址</button>
+        <button class="btn sm pri" id="acSave">保存公网地址</button>
+      </div>
+      <div class="small" id="acHint" style="margin-top:8px;color:#8ba3bf"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><b>赔率编辑</b><div class="spacer"></div>
+      <select id="odMatch" style="background:#0e1c2a;color:#dbe8f5;border:1px solid #22374f;border-radius:8px;padding:5px 8px;font-size:12px;max-width:320px"></select>
+      <button class="btn sm" id="odLoad">读取</button>
+      <button class="btn sm" id="odRecalc">按模型重算</button>
+      <button class="btn sm pri" id="odSave">保存赔率</button>
+    </div>
+    <div class="pb">
+      <div class="small" id="odMeta" style="margin-bottom:10px">选择场次后点击「读取」</div>
+      <div id="odForm"><div class="small">暂无赔率数据</div></div>
+      <div class="small" style="margin-top:10px;color:#8ba3bf">赔率取值 1.01 - 200；保存后立即生效于用户端该场全部盘口。正确比分最多 30 个选项。</div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="ph"><b>赛事视频源</b><div class="spacer"></div>
+      <span class="small" style="margin-right:10px">直播源会置顶展示；回放源保留为下拉切换项</span>
       <button class="btn sm pri" id="btnAddVideo">新增视频源</button></div>
     <div class="pb" style="padding:0">
-      <table><thead><tr><th>ID</th><th>关联场次</th><th>标题</th><th>类型</th><th>地址</th><th>操作</th></tr></thead>
+      <table><thead><tr><th>ID</th><th>关联场次</th><th>标题</th><th>类型</th><th>直播/回放</th><th>手机端配置类型</th><th>地址</th><th>状态</th><th>操作</th></tr></thead>
       <tbody id="videoBody"></tbody></table>
     </div>
   </div>
@@ -133,17 +171,43 @@ background:#16283c;border:1px solid #2b4360;padding:11px 18px;border-radius:11px
   </div>
 </div>
 
+<div class="overlay hide" id="pwdModal">
+  <div class="modal">
+    <h3>修改管理员密码</h3>
+    <div class="f"><label>原密码</label><input id="pwOld" type="password" placeholder="当前密码" autocomplete="current-password"></div>
+    <div class="f"><label>新密码（8-64 位，需含字母和数字）</label><input id="pwNew" type="password" placeholder="新密码" autocomplete="new-password"></div>
+    <div class="f"><label>确认新密码</label><input id="pwNew2" type="password" placeholder="再次输入新密码" autocomplete="new-password"></div>
+    <div class="small" id="pwHint" style="margin:-4px 0 10px">修改成功后所有已登录会话（含当前会话）立即失效，需用新密码重新登录。</div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="pwCancel">取消</button>
+      <button class="btn pri" id="pwSave">确认修改</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay hide" id="videoModal">
   <div class="modal">
-    <h3>新增赛事视频源</h3>
+    <h3 id="vmHeading">新增赛事视频源</h3>
+    <input type="hidden" id="vmId" value="0">
     <div class="f"><label>关联场次（0 = 全局通用）</label><input id="vmMatch" type="number" value="0"></div>
     <div class="f"><label>标题</label><input id="vmTitle" placeholder="如：决赛官方集锦"></div>
     <div class="f"><label>类型</label><select id="vmKind">
       <option value="embed">embed（官方嵌入页 iframe）</option>
+      <option value="link">link（官方开放页跳转，可跳转播放）</option>
       <option value="hls">hls（.m3u8 直播/回放）</option>
       <option value="mp4">mp4（直链视频）</option></select></div>
+    <div class="f"><label>手机端配置类型</label><select id="vmPlatform">
+      <option value="all">通用（电脑端 + 手机端都展示）</option>
+      <option value="pc">仅电脑端（手机端隐藏）</option>
+      <option value="mobile">仅手机端（电脑端隐藏，手机端优先）</option></select></div>
+    <div class="f"><label>源属性</label><select id="vmLive">
+      <option value="0">历史回放（下拉可选）</option>
+      <option value="1">实时直播（置顶并标注「直播中」）</option></select></div>
     <div class="f"><label>地址（必须是您拥有合法授权的源）</label><input id="vmUrl" placeholder="https://..."></div>
+    <div class="f"><label class="small"><input id="vmEnabled" type="checkbox" checked style="vertical-align:-2px"> 启用该源</label></div>
+    <div class="small" id="vmProbe" style="margin:-4px 0 8px;color:#8ba3bf"></div>
     <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="vmTest">测连通</button>
       <button class="btn" id="vmCancel">取消</button>
       <button class="btn pri" id="vmSave">保存</button>
     </div>
@@ -171,7 +235,8 @@ $('#btnLogin').onclick = async ()=>{
   TOKEN = j.data.token; localStorage.setItem('wc_admin_token', TOKEN);
   $('#whoami').textContent = '管理员：' + j.data.user.username;
   $('#loginOverlay').classList.add('hide'); toast('登录成功');
-  refreshAll(); loadUsers(); loadVideos();
+  loadOddsList();
+  refreshAll(); loadUsers(); loadVideos(); loadAccess();
 };
 $('#btnLogout').onclick = ()=>{ TOKEN=''; localStorage.removeItem('wc_admin_token'); location.reload(); };
 $('#btnRefresh').onclick = ()=>{ refreshAll(); loadUsers(); loadVideos(); toast('已刷新'); };
@@ -248,26 +313,279 @@ async function doCoins(uid, delta){
   loadUsers(); refreshAll();
 }
 
+let ACCESS_INFO = null, ACCESS_REAL = null, ACCESS_REVEALED = false;
+
+function paintAccess(j){
+  ACCESS_INFO = j;
+  $('#acLocal').value = j.local;
+  $('#acLan').value = j.lan;
+  ACCESS_REVEALED = !!j.reveal;
+  $('#acPublic').value = j.public_base || '';
+  $('#acPublic').readOnly = !ACCESS_REVEALED || !j.has_public;
+  $('#acPublic').style.color = ACCESS_REVEALED ? '#e6f0fa' : '#7f95ad';
+  $('#acReveal').textContent = ACCESS_REVEALED ? '隐藏真实地址' : '显示真实地址';
+  if (!ACCESS_REVEALED) ACCESS_REAL = null;
+  $('#acHint').innerHTML = j.has_public
+    ? ('公网地址已保存：<b>' + (j.public_base_masked || '') + '</b>　' +
+       (j.mask_on ? '（默认打码，截图/录屏不泄露真实域名；点「显示真实地址」由管理员临时查看）'
+                  : '（当前已关闭打码，真实域名明文显示）'))
+    : ('公网地址为空。启动隧道：' + j.tunnel_cmd + '，再把 https 地址填入并保存。');
+}
+
+async function loadAccess(reveal){
+  const j = await api('/api/admin/access' + (reveal ? '?reveal=1' : ''));
+  if (!j.ok) { if (reveal) toast(j.error || '登录已失效，请重新登录', false); return; }
+  if (reveal) ACCESS_REAL = j.data.public_base;
+  paintAccess(j.data);
+}
+
+$('#acReveal').onclick = async ()=>{
+  if (!ACCESS_REVEALED) { await loadAccess(true); if (ACCESS_REVEALED) toast('已显示真实地址，离开或刷新后自动隐藏'); }
+  else { await loadAccess(false); toast('已隐藏真实地址'); }
+};
+async function copyText(v){
+  if (!v) return false;
+  try { await navigator.clipboard.writeText(v); return true; }
+  catch(e){ const t=document.createElement('textarea'); t.value=v; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); return true; }
+}
+$('#acCopy').onclick = async ()=>{ if (await copyText($('#acLan').value)) toast('已复制局域网地址'); };
+$('#acCopyPub').onclick = async ()=>{
+  if (!ACCESS_INFO || !ACCESS_INFO.has_public) return toast('尚未配置公网地址', false);
+  if (!ACCESS_REVEALED) { toast('请先点「显示真实地址」再复制', false); return; }
+  if (await copyText(ACCESS_REAL || $('#acPublic').value)) toast('已复制公网地址');
+};
+$('#acSave').onclick = async ()=>{
+  const v = $('#acPublic').value.trim();
+  if (!ACCESS_REVEALED && v.indexOf('*') >= 0) return toast('请先点「显示真实地址」，再修改后保存', false);
+  const j = await api('/api/admin/access','POST',{public_base:v});
+  if (!j.ok) return toast(j.error, false);
+  toast('公网地址已保存（默认打码显示）'); loadAccess(false);
+};
+$('#acOpen').onclick = ()=>{
+  const v = ACCESS_REVEALED ? ($('#acPublic').value || '').trim() : '';
+  if (!v) return toast('请先点「显示真实地址」再打开', false);
+  window.open(v, '_blank', 'noopener');
+};
+
+let VIDEO_CACHE = [];
+const PF_CN = {all:'通用', pc:'仅电脑端', mobile:'仅手机端'};
 async function loadVideos(){
   const j = await api('/api/admin/videos'); if (!j.ok) return;
+  VIDEO_CACHE = j.data;
   $('#videoBody').innerHTML = j.data.map(v=>`<tr>
     <td>${v.id}</td><td>${v.match_id===0?'全局':('#'+v.match_id)}</td><td>${v.title}</td>
-    <td>${v.kind}</td><td class="small" style="max-width:420px;overflow:hidden;text-overflow:ellipsis">${v.url}</td>
-    <td><button class="btn sm dan" data-del="${v.id}">删除</button></td></tr>`).join('')
-    || '<tr><td colspan="6" class="small" style="padding:16px">尚未配置视频源，用户端将只显示官方持权渠道入口</td></tr>';
+    <td>${v.kind}</td>
+    <td>${v.is_live?'<span style="color:#ff5a5a;font-weight:700">直播中</span>':'<span style="color:#8ba3bf">回放</span>'}</td>
+    <td>${(v.platform&&v.platform!=='all')?('<span style="color:#7cc4ff">'+PF_CN[v.platform]+'</span>'):'通用'}</td>
+    <td class="small" style="max-width:300px;overflow:hidden;text-overflow:ellipsis">${v.url}</td>
+    <td>${v.enabled?'<span style="color:#3ddc84">启用</span>':'<span style="color:#8ba3bf">停用</span>'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn sm" data-edit="${v.id}">编辑</button>
+      <button class="btn sm" data-toggle="${v.id}">${v.enabled?'停用':'启用'}</button>
+      <button class="btn sm" data-live="${v.id}">${v.is_live?'标为回放':'标为直播'}</button>
+      <button class="btn sm" data-test="${v.id}">测连通</button>
+      <button class="btn sm dan" data-del="${v.id}">删除</button>
+    </td></tr>`).join('')
+    || '<tr><td colspan="9" class="small" style="padding:16px">尚未配置视频源，用户端将只显示官方持权渠道入口</td></tr>';
   $$('[data-del]').forEach(b=>b.onclick = async ()=>{
     if (!confirm('确认删除该视频源？')) return;
     const j2 = await api('/api/admin/videos/delete','POST',{id:+b.dataset.del});
     toast(j2.ok?'已删除':j2.error, j2.ok); loadVideos();
   });
+  $$('[data-edit]').forEach(b=>b.onclick = ()=>{
+    const v = VIDEO_CACHE.find(x=>x.id===+b.dataset.edit); if (v) openVideoModal(v);
+  });
+  $$('[data-toggle]').forEach(b=>b.onclick = async ()=>{
+    const v = VIDEO_CACHE.find(x=>x.id===+b.dataset.toggle);
+    const j2 = await api('/api/admin/videos/toggle','POST',{id:+b.dataset.toggle, enabled: v ? !v.enabled : true});
+    toast(j2.ok?(j2.data.enabled?'已启用':'已停用'):j2.error, j2.ok); loadVideos();
+  });
+  $$('[data-live]').forEach(b=>b.onclick = async ()=>{
+    const v = VIDEO_CACHE.find(x=>x.id===+b.dataset.live);
+    const j2 = await api('/api/admin/videos/update','POST',Object.assign({}, v, {id:+b.dataset.live, is_live: v && v.is_live ? 0 : 1}));
+    toast(j2.ok?(j2.data.is_live?'已标为直播源':'已改回回放源'):j2.error, j2.ok); loadVideos();
+  });
+  $$('[data-test]').forEach(b=>b.onclick = async ()=>{
+    toast('正在探测…');
+    const j2 = await api('/api/admin/videos/test?id='+b.dataset.test);
+    if (!j2.ok) return toast(j2.error, false);
+    const d = j2.data;
+    toast(d.reachable ? ('可达 '+d.status+' · '+d.content_type+' · '+d.elapsed_ms+'ms') : ('不可达：'+d.error), !!d.reachable);
+  });
 }
-$('#btnAddVideo').onclick = ()=>$('#videoModal').classList.remove('hide');
-$('#vmCancel').onclick = ()=>$('#videoModal').classList.add('hide');
-$('#vmSave').onclick = async ()=>{
-  const j = await api('/api/admin/videos','POST',{match_id:+$('#vmMatch').value||0, title:$('#vmTitle').value,
-    kind:$('#vmKind').value, url:$('#vmUrl').value.trim()});
+function openVideoModal(v){
+  $('#vmId').value = v ? v.id : 0;
+  $('#vmHeading').textContent = v ? ('编辑赛事视频源 #' + v.id) : '新增赛事视频源';
+  $('#vmMatch').value = v ? v.match_id : 0;
+  $('#vmTitle').value = v ? v.title : '';
+  $('#vmKind').value = v ? v.kind : 'embed';
+  $('#vmPlatform').value = v ? (v.platform || 'all') : 'all';
+  $('#vmLive').value = v && v.is_live ? '1' : '0';
+  $('#vmUrl').value = v ? v.url : '';
+  $('#vmEnabled').checked = v ? !!v.enabled : true;
+  $('#vmProbe').textContent = '';
+  $('#videoModal').classList.remove('hide');
+}
+function closeVideoModal(){ $('#videoModal').classList.add('hide'); }
+$('#btnAddVideo').onclick = ()=>openVideoModal(null);
+$('#vmCancel').onclick = closeVideoModal;
+$('#vmTest').onclick = async ()=>{
+  const id = +$('#vmId').value;
+  if (!id) return toast('请先保存，再测连通', false);
+  const d0 = VIDEO_CACHE.find(x=>x.id===id);
+  if (d0 && d0.url !== $('#vmUrl').value.trim()) return toast('地址已修改，请先保存再测', false);
+  const j = await api('/api/admin/videos/test?id='+id);
   if (!j.ok) return toast(j.error, false);
-  $('#videoModal').classList.add('hide'); toast('已添加'); loadVideos();
+  const d = j.data;
+  $('#vmProbe').textContent = d.reachable
+    ? ('可达 · HTTP '+d.status+' · '+(d.content_type||'-')+' · '+(d.note||'')+' · '+d.elapsed_ms+'ms')
+    : ('不可达 · '+(d.error||'未知错误'));
+  toast(d.reachable ? '源可达' : '源不可达', !!d.reachable);
+};
+$('#vmSave').onclick = async ()=>{
+  const id = +$('#vmId').value;
+  const body = {match_id:+$('#vmMatch').value||0, title:$('#vmTitle').value,
+    kind:$('#vmKind').value, platform:$('#vmPlatform').value,
+    url:$('#vmUrl').value.trim(), enabled:$('#vmEnabled').checked,
+    is_live: $('#vmLive').value === '1'};
+  if (!body.url.startsWith('http')) return toast('地址需以 http(s) 开头', false);
+  const j = id ? await api('/api/admin/videos/update','POST',Object.assign({id}, body))
+               : await api('/api/admin/videos','POST',body);
+  if (!j.ok) return toast(j.error, false);
+  closeVideoModal(); toast(id?'已保存修改':'已添加'); loadVideos();
+};
+
+/* ---------------- 赔率编辑 ---------------- */
+const MK_CN = {'1x2':'胜平负', ou25:'大小球 2.5', btts:'双方进球'};
+const MK_SEL = {'1x2':[['home','主胜'],['draw','平局'],['away','客胜']],
+                ou25:[['over','大球'],['under','小球']],
+                btts:[['yes','是'],['no','否']]};
+let OD_CUR = null;
+function odField(mk, sel, label, val){
+  return `<div class="f" style="min-width:112px;flex:0 0 auto"><label>${label}</label>
+    <input data-od="${mk}|${sel}" type="number" step="0.01" min="1.01" max="200"
+      value="${val?Number(val).toFixed(2):''}" placeholder="1.01-200"></div>`;
+}
+function odCsRow(c){
+  return `<tr data-csrow><td><input data-cs-sel value="${c?c.sel:''}" placeholder="2-1" style="width:78px"></td>
+    <td><input data-cs-odds type="number" step="0.01" min="1.01" max="200"
+      value="${c&&c.odds?Number(c.odds).toFixed(2):''}" placeholder="1.01-200" style="width:110px"></td>
+    <td><button class="btn sm dan" type="button" data-cs-del>移除</button></td></tr>`;
+}
+function renderOddsForm(d){
+  OD_CUR = d;
+  const o = d.odds || {};
+  const src = d.source === 'manual' ? '管理员手工' : '模型生成';
+  $('#odMeta').innerHTML = `#${d.num} <b>${d.team1_cn} vs ${d.team2_cn}</b>` +
+    ` · ${d.stage_cn || ''} · 状态 <b>${d.status}</b> · 来源 <b>${src}</b>` +
+    ` · 更新时间 ${d.updated_at || '—'} · 胜平负水位 ${(Number(d.margin || 0) * 100).toFixed(1)}%`;
+  const has = o['1x2'] && o['1x2'].home;
+  if (!has){
+    $('#odForm').innerHTML = `<div class="small" style="padding:8px 0;color:#ffb45c">
+      该场尚未开盘（库内无赔率）。点击右上角「按模型重算」生成一版赔率后即可手工微调。</div>`;
+    return;
+  }
+  const mkHtml = Object.keys(MK_SEL).map(mk=>`
+    <div style="margin-bottom:12px">
+      <div class="small" style="margin-bottom:6px;color:#9fc0dd">${MK_CN[mk]}</div>
+      <div class="row" style="gap:10px;flex-wrap:wrap;margin:0">
+        ${MK_SEL[mk].map(([s,l])=>odField(mk, s, l, (o[mk]||{})[s])).join('')}
+      </div>
+    </div>`).join('');
+  const csRows = (o.cs || []).map(odCsRow).join('');
+  $('#odForm').innerHTML = mkHtml + `
+    <div style="margin-top:4px">
+      <div class="small" style="margin-bottom:6px;color:#9fc0dd">正确比分（最多 30 项，格式 主-客）</div>
+      <table style="width:auto"><thead><tr><th>比分</th><th>赔率</th><th></th></tr></thead>
+        <tbody id="odCsBody">${csRows}</tbody></table>
+      <button class="btn sm" type="button" id="odAddCs" style="margin-top:8px">+ 新增比分选项</button>
+    </div>`;
+}
+async function loadOddsList(keep){
+  const sel = $('#odMatch');
+  const cur = keep ? sel.value : '';
+  const j = await api('/api/admin/odds');
+  if (!j.ok) return toast(j.error, false);
+  const list = j.data.matches || [];
+  sel.innerHTML = list.map(m=>`<option value="${m.match_id}">#${m.num} ${m.team1_cn} vs ${m.team2_cn}（${m.status}）</option>`).join('');
+  if (!list.length){ $('#odForm').innerHTML = '<div class="small">暂无场次</div>'; return; }
+  if (cur && list.some(m=>String(m.match_id)===String(cur))) sel.value = cur;
+  loadOneOdds(sel.value || list[0].match_id);
+}
+async function loadOneOdds(id){
+  const j = await api('/api/admin/odds?match_id=' + id);
+  if (!j.ok) return toast(j.error, false);
+  renderOddsForm(j.data);
+}
+function collectOdds(){
+  const odds = {'1x2':{}, ou25:{}, btts:{}, cs: []};
+  $$('[data-od]').forEach(i=>{
+    const p = i.dataset.od.split('|');
+    odds[p[0]][p[1]] = parseFloat(i.value);
+  });
+  $$('[data-csrow]').forEach(tr=>{
+    const s = tr.querySelector('[data-cs-sel]').value.trim();
+    const v = parseFloat(tr.querySelector('[data-cs-odds]').value);
+    if (s) odds.cs.push({sel:s, odds:v});
+  });
+  return odds;
+}
+$('#odMatch').onchange = ()=>loadOneOdds($('#odMatch').value);
+$('#odLoad').onclick = ()=>loadOddsList(true);
+$('#odForm').addEventListener('click', e=>{
+  if (e.target.matches('[data-cs-del]')) e.target.closest('[data-csrow]').remove();
+  if (e.target.id === 'odAddCs'){
+    const tb = $('#odCsBody');
+    const n = tb.querySelectorAll('[data-csrow]').length;
+    if (n >= 30) return toast('正确比分最多 30 项', false);
+    tb.insertAdjacentHTML('beforeend', odCsRow(null));
+  }
+});
+$('#odSave').onclick = async ()=>{
+  if (!OD_CUR) return toast('请先读取场次赔率', false);
+  const odds = collectOdds();
+  for (const mk of ['1x2','ou25','btts']){
+    for (const [s] of MK_SEL[mk]){
+      const v = odds[mk][s];
+      if (!v || v < 1.01 || v > 200) return toast(`${MK_CN[mk]} 的赔率需在 1.01-200`, false);
+    }
+  }
+  if (!odds.cs.length) return toast('正确比分至少保留 1 个选项', false);
+  const j = await api('/api/admin/odds','POST',{action:'save', match_id:OD_CUR.match_id, odds});
+  if (!j.ok) return toast(j.error, false);
+  renderOddsForm(j.data);
+  toast('赔率已保存并即时生效');
+};
+$('#odRecalc').onclick = async ()=>{
+  const id = $('#odMatch').value;
+  if (!id) return toast('请先选择场次', false);
+  if (!confirm('按模型重算会覆盖该场现有赔率（含手工修改），确认？')) return;
+  const j = await api('/api/admin/odds','POST',{action:'recalc', match_id:+id});
+  if (!j.ok) return toast(j.error, false);
+  renderOddsForm(j.data);
+  toast('已按模型重算并写入');
+};
+
+/* ---------------- 修改密码 ---------------- */
+$('#btnPwd').onclick = ()=>{
+  $('#pwOld').value = ''; $('#pwNew').value = ''; $('#pwNew2').value = '';
+  $('#pwdModal').classList.remove('hide');
+};
+$('#pwCancel').onclick = ()=>$('#pwdModal').classList.add('hide');
+$('#pwSave').onclick = async ()=>{
+  const old = $('#pwOld').value, nw = $('#pwNew').value, nw2 = $('#pwNew2').value;
+  if (!old) return toast('请输入原密码', false);
+  if (nw !== nw2) return toast('两次输入的新密码不一致', false);
+  if (nw.length < 8) return toast('新密码至少 8 位', false);
+  if (!/[A-Za-z]/.test(nw) || !/\d/.test(nw)) return toast('新密码需同时包含字母和数字', false);
+  if (nw === old) return toast('新密码不能与原密码相同', false);
+  const j = await api('/api/admin/password','POST',{old_password:old, new_password:nw, confirm_password:nw2});
+  if (!j.ok) return toast(j.error, false);
+  toast('密码已修改，请用新密码重新登录');
+  TOKEN = ''; localStorage.removeItem('wc_admin_token');
+  setTimeout(()=>{ $('#pwdModal').classList.add('hide');
+    $('#whoami').textContent = ''; $('#lgPass').value = '';
+    $('#loginOverlay').classList.remove('hide'); }, 700);
 };
 
 $$('[data-season]').forEach(b=>b.onclick = async ()=>{
@@ -288,7 +606,7 @@ $('#btnSaveSet').onclick = async ()=>{
   toast(j.ok?'设置已保存':j.error, j.ok); refreshAll();
 };
 
-if (TOKEN) refreshAll(); else $('#loginOverlay').classList.remove('hide');
+if (TOKEN) { refreshAll(); loadUsers(); loadVideos(); loadAccess(); loadOddsList(); } else $('#loginOverlay').classList.remove('hide');
 setInterval(()=>{ if (TOKEN) refreshAll(); }, 4000);
 </script>
 </body>

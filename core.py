@@ -210,22 +210,32 @@ def load_secret():
 SECRET = load_secret()
 
 
-def make_token(uid, role):
+def make_token(uid, role, ver=0):
+    """签发 token；ver 为密码版本号，改密后旧 token 立即失效。"""
     exp = int(time.time()) + 86400 * 7
-    payload = "%s.%s.%s" % (uid, role, exp)
+    payload = "%s.%s.%s.%s" % (uid, role, exp, int(ver or 0))
     sig = hmac.new(SECRET, payload.encode(), hashlib.sha256).hexdigest()[:32]
     return payload + "." + sig
 
 
 def parse_token(tok):
+    """返回 (uid, role, ver)；旧格式 token（无版本段）按版本 0 兼容。"""
     try:
-        uid, role, exp, sig = tok.split(".")
-        payload = "%s.%s.%s" % (uid, role, exp)
+        parts = tok.split(".")
+        if len(parts) == 5:
+            uid, role, exp, ver, sig = parts
+            payload = "%s.%s.%s.%s" % (uid, role, exp, ver)
+        elif len(parts) == 4:
+            uid, role, exp, sig = parts
+            ver = "0"
+            payload = "%s.%s.%s" % (uid, role, exp)
+        else:
+            return None
         if hmac.new(SECRET, payload.encode(), hashlib.sha256).hexdigest()[:32] != sig:
             return None
         if int(exp) < time.time():
             return None
-        return int(uid), role
+        return int(uid), role, int(ver)
     except Exception:
         return None
 
@@ -267,7 +277,9 @@ def init_db():
       goals TEXT, odds TEXT, kickoff REAL,
       status TEXT DEFAULT 'upcoming',
       settled INTEGER DEFAULT 0,
-      live_start REAL
+      live_start REAL,
+      odds_source TEXT DEFAULT 'model',
+      odds_updated_at TEXT
     );
     CREATE TABLE IF NOT EXISTS bets(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -284,16 +296,39 @@ def init_db():
     CREATE TABLE IF NOT EXISTS videos(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       match_id INTEGER DEFAULT 0,
-      title TEXT, kind TEXT, url TEXT, enabled INTEGER DEFAULT 1
+      title TEXT, kind TEXT, url TEXT, enabled INTEGER DEFAULT 1,
+      is_live INTEGER DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS settings(k TEXT PRIMARY KEY, v TEXT);
     CREATE INDEX IF NOT EXISTS idx_bets_match ON bets(match_id);
     CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id);
     """)
+    # 轻量迁移：老库补列，保证改密后旧 token 失效
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(users)")}
+    if "token_ver" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN token_ver INTEGER DEFAULT 0")
+    vcols = {r["name"] for r in conn.execute("PRAGMA table_info(videos)")}
+    if "created_at" not in vcols:
+        conn.execute("ALTER TABLE videos ADD COLUMN created_at TEXT")
+    # 轻量迁移：视频源增加「客户端类型」维度（all=通用 / pc=仅电脑端 / mobile=仅手机端）
+    vcols = {r["name"] for r in conn.execute("PRAGMA table_info(videos)")}
+    if "platform" not in vcols:
+        conn.execute("ALTER TABLE videos ADD COLUMN platform TEXT DEFAULT 'all'")
+    # 轻量迁移：视频源增加「直播 / 回放」标记（1=直播源，用户端置顶并标注「直播中」）
+    vcols = {r["name"] for r in conn.execute("PRAGMA table_info(videos)")}
+    if "is_live" not in vcols:
+        conn.execute("ALTER TABLE videos ADD COLUMN is_live INTEGER DEFAULT 0")
+    # 轻量迁移：比赛赔率记录来源与更新时间（model=模型生成 / manual=管理员手工调整）
+    mcols = {r["name"] for r in conn.execute("PRAGMA table_info(matches)")}
+    if "odds_source" not in mcols:
+        conn.execute("ALTER TABLE matches ADD COLUMN odds_source TEXT DEFAULT 'model'")
+    if "odds_updated_at" not in mcols:
+        conn.execute("ALTER TABLE matches ADD COLUMN odds_updated_at TEXT")
     defaults = {
         "season_status": "idle", "season_auto": "1", "current_num": "1",
         "phase": "idle", "phase_start": "0", "betting_seconds": "30",
         "live_seconds": "60", "intermission_seconds": "3",
+        "public_base": "", "access_masked": "1",
     }
     for k, v in defaults.items():
         conn.execute("INSERT OR IGNORE INTO settings(k,v) VALUES(?,?)", (k, v))

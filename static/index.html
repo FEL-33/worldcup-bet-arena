@@ -138,6 +138,30 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .channels a{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
 .channels a:hover{border-color:var(--green);color:#b9f6ce}
 .notice{font-size:11px;color:#7e93aa;line-height:1.7;margin-top:10px}
+/* ---------- 详情抽屉 · 投注盘口面板 */
+.oddsPanel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:16px}
+.oddsPanel .odhead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px;margin-bottom:2px}
+.oddsPanel .odtip{font-weight:400;font-size:11px;color:#7e93aa}
+.mkt{margin-top:14px}
+.mkt h4{margin:0 0 8px;font-size:12px;color:#9fb4ca;font-weight:700;letter-spacing:.3px}
+.ogrid{display:grid;gap:8px}
+.ogrid.g2{grid-template-columns:1fr 1fr}
+.ogrid.g3{grid-template-columns:repeat(3,1fr)}
+.ogrid.g4{grid-template-columns:repeat(4,1fr)}
+.oddcell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 6px;
+  background:#0e1c2a;border:1px solid #22374f;border-radius:10px;color:#cfe3f7;transition:.15s}
+.oddcell span{font-size:11px;color:#9fb4ca;line-height:1.3;text-align:center}
+.oddcell b{font-size:15px;color:var(--gold);font-weight:800}
+.oddcell:hover:not(:disabled){border-color:var(--green);background:rgba(34,197,94,.10)}
+.oddcell.locked{opacity:.45;cursor:not-allowed}
+.livebadge{display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,.15);
+  border:1px solid rgba(239,68,68,.55);color:#ff9d9d;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}
+.livebadge i{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s infinite}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.25}}
+.backlive{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.5);color:#ffb3b3;
+  border-radius:8px;padding:3px 9px;font-size:11px;font-weight:700}
+.backlive:hover{background:rgba(239,68,68,.24)}
+@media(max-width:520px){.ogrid.g3{grid-template-columns:1fr 1fr}.ogrid.g4{grid-template-columns:1fr 1fr}}
 /* ---------- toast */
 #toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;
   background:#16283c;border:1px solid #2b4360;color:#e8f0fa;padding:12px 20px;border-radius:12px;font-size:13px;z-index:200;pointer-events:none;max-width:90vw}
@@ -414,13 +438,27 @@ function renderMatches(){
 }
 
 /* ---------------- 下注 ---------------- */
-function openBet(id, key){
-  const m = MATCHES.find(x=>x.id===id);
-  if (!m || !m.odds) return;
-  const [market, sel] = key.split('|');
+function openBet(id, key, matchRef){
+  const m = matchRef || MATCHES.find(x=>x.id===id);
+  if (!m || !m.odds) return toast('该场暂未开盘', false);
+  const [market, sel] = String(key).split('|');
+  const o = m.odds;
   let odds = 0, label = '', marketName = '';
-  if (market==='1x2'){ odds=m.odds['1x2'][sel]; marketName='胜平负（90分钟）';
-    label = sel==='home'?m.team1_cn+' 胜':sel==='draw'?'平局':m.team2_cn+' 胜'; }
+  if (market === '1x2'){
+    odds = Number((o['1x2'] || {})[sel] || 0); marketName = '胜平负（90分钟）';
+    label = sel==='home' ? m.team1_cn+' 胜' : sel==='draw' ? '平局' : m.team2_cn+' 胜';
+  } else if (market === 'ou25'){
+    odds = Number((o.ou25 || {})[sel] || 0); marketName = '大小球 2.5（90分钟）';
+    label = sel==='over' ? '大球 2.5（全场 3 球及以上）' : '小球 2.5（全场 0-2 球）';
+  } else if (market === 'btts'){
+    odds = Number((o.btts || {})[sel] || 0); marketName = '双方进球（90分钟）';
+    label = sel==='yes' ? '是 · 两队都有进球' : '否 · 至少一队未进球';
+  } else if (market === 'cs'){
+    const c = (o.cs || []).find(x=>x.sel===sel);
+    odds = Number((c && c.odds) || 0); marketName = '正确比分（90分钟）';
+    label = '比分 ' + sel + '（' + m.team1_cn + ' ' + sel.replace('-', ' : ') + ' ' + m.team2_cn + '）';
+  }
+  if (!odds) return toast('该选项暂未开放', false);
   BET_CTX = {m, market, sel, odds, label, marketName};
   $('#bmTitle').textContent = m.team1_cn + ' vs ' + m.team2_cn;
   $('#bmSub').textContent = m.stage_cn + ' · 第' + m.num + '场 · 比赛时间 ' + m.date;
@@ -526,18 +564,9 @@ async function openDetail(id){
       gs.map(g=>`<div class="g"><span>${g.minute}' ${g.side}</span><span>${g.name}${g.penalty?' (点球)':''}</span></div>`).join('') + `</div>`;
   }
   const sc = m.score ? `${m.score.ft[0]} : ${m.score.ft[1]}` : 'VS';
-  let videoHtml = '';
-  if (m.videos && m.videos.length){
-    const v = m.videos[0];
-    if (v.kind === 'embed'){
-      videoHtml = `<div class="videobox"><div class="vhead"><span>${v.title}</span><span style="color:#7e93aa">嵌入源</span></div>
-        <iframe src="${v.url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>`;
-    } else {
-      videoHtml = `<div class="videobox"><div class="vhead"><span>${v.title}</span><span style="color:#7e93aa">${v.kind.toUpperCase()}</span></div>
-        <video id="dVideo" controls playsinline poster=""></video></div>`;
-      setTimeout(()=>attachVideo(v), 60);
-    }
-  }
+  const play0 = {match:{num:m.num}, live:false,
+    sources:(m.videos||[]).map(v=>({...v, scope: v.match_id?'match':'global'}))};
+  let videoHtml = renderPlayBox(play0, m);
   $('#dBody').innerHTML = `
     <div class="dscore">
       <div class="t"><div class="fl">${m.flag1}</div><div class="n">${m.team1_cn}</div></div>
@@ -554,7 +583,8 @@ async function openDetail(id){
     </div>
     ${goalsHtml}
     <div style="font-weight:700;margin:16px 0 4px">赛事视频</div>
-    ${videoHtml}
+    <div id="videoSlot">${videoHtml}</div>
+    ${oddsPanel(m)}
     <div class="channels">${OFFICIAL.map(o=>`<a href="${o.u}" target="_blank" rel="noopener">${o.n}<span>↗</span></a>`).join('')}</div>
     <div class="notice">
       2026 世界杯已于 2026-07-19 结束，当前赛季为「真实赛程回放」，比分与进球数据完全取自公开真实赛果，未做任何修改。<br>
@@ -562,6 +592,110 @@ async function openDetail(id){
       视频区仅提供官方持权渠道入口；如需内嵌播放，请在管理端配置您拥有合法授权的直播/回放源（HLS、MP4 或官方嵌入页），系统不内置任何第三方盗链。
     </div>`;
   $('#drawer').classList.add('open');
+  bindPlayBox(play0);
+  $$('#oddsPanel [data-odds]').forEach(b=>{
+    b.onclick = ()=>openBet(m.id, b.dataset.odds, m);
+  });
+  loadVideoPlay(m.id);
+}
+/* 详情抽屉 · 四盘口投注面板 */
+function oddsPanel(m){
+  const o = m.odds || null;
+  if (!o){
+    return `<div class="oddsPanel"><div class="odhead"><span>投注盘口</span>
+      <span class="odtip">本场尚未开盘</span></div>
+      <div style="color:#7e93aa;font-size:12px;margin-top:8px">赛季推进到本场并进入下注阶段后，四个盘口会在此处展示。</div></div>`;
+  }
+  const open = m.status === 'open';
+  const tip = open ? '点击任意赔率即可下注' : '当前不可下注（未开赛 / 已封盘）';
+  const cell = (mk, key, label, odds)=>{
+    const v = Number(odds || 0);
+    return `<button class="oddcell${open && v ? '' : ' locked'}" ${open && v ? '' : 'disabled'}
+      data-odds="${mk}|${key}"><span>${label}</span><b>${v ? v.toFixed(2) : '—'}</b></button>`;
+  };
+  const x = o['1x2'] || {}, u = o.ou25 || {}, b = o.btts || {}, cs = o.cs || [];
+  return `<div class="oddsPanel" id="oddsPanel">
+    <div class="odhead"><span>投注盘口 · 全场 90 分钟</span><span class="odtip">${tip}</span></div>
+    <div class="mkt"><h4>胜平负</h4><div class="ogrid g3">
+      ${cell('1x2','home', m.team1_cn+' 胜', x.home)}
+      ${cell('1x2','draw','平局', x.draw)}
+      ${cell('1x2','away', m.team2_cn+' 胜', x.away)}
+    </div></div>
+    <div class="mkt"><h4>大小球 2.5</h4><div class="ogrid g2">
+      ${cell('ou25','over','大球（≥3 球）', u.over)}
+      ${cell('ou25','under','小球（0-2 球）', u.under)}
+    </div></div>
+    <div class="mkt"><h4>双方进球</h4><div class="ogrid g2">
+      ${cell('btts','yes','是 · 两队都进球', b.yes)}
+      ${cell('btts','no','否 · 至少一队未进球', b.no)}
+    </div></div>
+    <div class="mkt"><h4>正确比分</h4><div class="ogrid g4">
+      ${cs.length ? cs.map(c=>cell('cs', c.sel, c.sel.replace('-', ' : '), c.odds)).join('')
+                  : '<div style="color:#7e93aa;font-size:12px">暂无比分盘口</div>'}
+    </div></div>
+  </div>`;
+}
+function renderPlayBox(play, m){
+  const srcs = play.fixed ? (play.sources || []).slice()
+                          : (play.sources || []).slice().sort((a,b)=>(b.is_live?1:0)-(a.is_live?1:0));
+  if (!srcs.length){
+    return `<div class="videobox"><div class="vhead"><span>暂无可用视频源</span><span style="color:#7e93aa">${m?('第'+m.num+'场'):''}</span></div>
+      <div style="padding:22px;color:#8ba3bf;font-size:13px">管理员尚未配置本场播放源，可先使用下方官方持权渠道入口。</div></div>`;
+  }
+  const v = srcs[0];
+  const hasLive = srcs.some(s=>s.is_live);
+  const badge = v.is_live
+    ? `<span class="livebadge"><i></i>直播中</span>`
+    : (play.live ? `<span class="livebadge"><i></i>直播中</span>` : `<span style="color:#7e93aa">回放</span>`);
+  const tag = v.is_live ? '实时直播源' : (v.scope === 'global' ? '全局源' : '历史回放');
+  const pfTag = v.platform === 'mobile' ? '手机端专属' : (v.platform === 'pc' ? '电脑端专属' : '');
+  const sel = srcs.length > 1
+    ? `<select id="vSource" style="background:#0f1a26;color:#cfe0f0;border:1px solid #23384f;border-radius:8px;padding:2px 6px;font-size:12px">` +
+      srcs.map((s,i)=>`<option value="${i}">${s.is_live?'直播｜':'回放｜'}${s.title}${s.scope==='global'?'（全局）':''}</option>`).join('') + `</select>`
+    : '';
+  const backLive = (hasLive && !v.is_live)
+    ? `<button class="backlive" id="vBackLive" type="button">回到直播</button>` : '';
+  let body;
+  if (v.kind === 'embed'){
+    body = `<iframe src="${v.url}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe>`;
+  } else if (v.kind === 'link'){
+    body = `<div style="padding:26px;text-align:center;color:#8ba3bf;font-size:13px">
+      该源为官方开放页面，禁止第三方 iframe 内嵌，请点击下方按钮在新窗口观看${v.is_live?'直播':'回放'}。<br>
+      <a style="display:inline-block;margin-top:14px;padding:9px 22px;text-decoration:none;border-radius:9px;background:linear-gradient(135deg,#2f7cf6,#1a5fd0);color:#fff;font-weight:700" href="${v.url}" target="_blank" rel="noopener">打开 ${v.title} ↗</a></div>`;
+  } else {
+    body = `<video id="dVideo" controls playsinline ${play.autoplay?'autoplay':''}></video>`;
+  }
+  return `<div class="videobox"><div class="vhead"><span style="display:flex;gap:8px;align-items:center">${badge}${v.title}</span>
+    <span style="display:flex;gap:8px;align-items:center">${backLive}${sel}<span style="color:#7e93aa">${String(v.kind).toUpperCase()}${pfTag?' · '+pfTag:''} · ${tag}</span></span></div>${body}</div>`;
+}
+function bindPlayBox(play){
+  const srcs = play.fixed ? (play.sources || []).slice()
+                          : (play.sources || []).slice().sort((a,b)=>(b.is_live?1:0)-(a.is_live?1:0));
+  if (!srcs.length) return;
+  const sel = $('#vSource');
+  if (sel) sel.onchange = ()=>{
+    const i = +sel.value;
+    const ordered = [srcs[i], ...srcs.filter((_,k)=>k!==i)];
+    const next = {...play, sources:ordered, autoplay:false, fixed:true};
+    $('#videoSlot').innerHTML = renderPlayBox(next, next.match);
+    bindPlayBox(next);
+  };
+  const back = $('#vBackLive');
+  if (back) back.onclick = ()=>{
+    const next = {...play, sources:srcs, autoplay:false, fixed:false};
+    $('#videoSlot').innerHTML = renderPlayBox(next, next.match);
+    bindPlayBox(next);
+  };
+  if (srcs[0].kind === 'hls' || srcs[0].kind === 'mp4') setTimeout(()=>attachVideo(srcs[0]), 60);
+}
+async function loadVideoPlay(mid){
+  try {
+    const r = await fetch('/api/video/play?match_id=' + encodeURIComponent(mid));
+    const j = await r.json();
+    if (!j.ok || !$('#videoSlot')) return;
+    $('#videoSlot').innerHTML = renderPlayBox(j.data, j.data.match);
+    bindPlayBox(j.data);
+  } catch(e){ /* 保底沿用详情自带源 */ }
 }
 function attachVideo(v){
   const el = $('#dVideo'); if (!el) return;

@@ -91,7 +91,8 @@ python app.py
 - **赛季控制**：开始 / 暂停 / 开当前场 / 立刻开赛 / 立刻结算 / 下一场 / 跳转任意场次 / 重置赛季（清空注单与流水）
 - **注单监控**：全部玩家最新 300 条注单，含盘口、选项、赔率、结算状态、返还
 - **用户管理**：金币人工调整（写流水，可填原因）、封禁 / 解封
-- **视频源管理**：为指定场次或全局配置 embed / HLS / MP4 播放源
+- **视频源管理**：为指定场次或全局配置 embed / HLS / MP4 播放源；支持编辑、启停、连通性探测（状态码 / Content-Type / 是否 HLS 清单）、删除
+- **管理员改密**：顶部「修改密码」→ 校验原密码 + 强度校验（8-64 位、须含字母和数字、拒绝常见弱口令）+ 两次确认；改密成功后所有旧会话（含当前）立即失效
 - **参数设置**：下注时长、比赛时长、场间间隔、自动推进开关
 
 ---
@@ -106,6 +107,8 @@ python app.py
    - `embed`：官方嵌入页（iframe）
    - `hls`：`.m3u8` 直播或回放（前端自动加载 hls.js）
    - `mp4`：直链视频
+
+**视频画面接口**：用户端打开比赛详情时调用 `GET /api/video/play?match_id=<场次ID>`（或 `?num=<场次号>`），接口按「本场源优先 → 全局源兜底」返回启用中的播放源列表、`mode`（embed / hls / mp4 / none）、`live`、`autoplay`、`refresh_ms`、`hls_js` 等配置，前端据此渲染播放器；配置多个源时播放器右上角出现源切换下拉。
 
 > 系统不内置、不代理、不解析任何第三方盗链或未授权转播源。能否内嵌播放取决于目标站点是否允许 iframe（`X-Frame-Options` / CSP）。
 
@@ -132,9 +135,15 @@ python app.py
 | POST | `/api/admin/season` | 赛季控制（start/pause/open/kickoff/settle/next/goto/reset） |
 | POST | `/api/admin/user/coins` `/api/admin/user/ban` | 调币 / 封禁 |
 | POST | `/api/admin/videos` `/api/admin/videos/delete` | 视频源增删 |
+| GET | `/api/video/play?match_id=&num=` | 视频画面接口：返回本场可用源（本场优先 + 全局兜底）、播放模式与播放器配置 |
+| GET | `/api/admin/videos/test?id=` | 视频源连通性探测（状态码 / Content-Type / 是否 HLS 清单） |
+| POST | `/api/admin/videos/update` | 编辑视频源（关联场次 / 标题 / 类型 / 地址 / 启用） |
+| POST | `/api/admin/videos/toggle` | 启用 / 停用视频源 |
+| POST | `/api/admin/password` | 管理员改密（校验原密码 → 换盐重哈希 → 旧会话全部失效） |
 | POST | `/api/admin/settings` | 时长与自动推进设置 |
 
 鉴权：`Authorization: Bearer <token>`，HMAC-SHA256 签名，7 天有效；密码加盐 SHA-256 存储。
+改密后该账号 `token_ver` 自增，所有旧 token 立即失效，需用新密码重新登录。
 
 ---
 
@@ -162,4 +171,4 @@ D:\WorldCupBetArena\
 ## 九、免责声明
 
 本项目为**模拟娱乐**产品：金币无任何现实价值，不可购买、不可兑换、不可转让；不提供任何真实投注渠道；比分与赛程来自公开数据，用于回放演示。请勿将本系统用于任何形式的真实博彩活动。
-
+*（内容由AI生成，仅供参考）*
